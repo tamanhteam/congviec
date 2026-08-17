@@ -87,8 +87,7 @@ function buildMessage(tasks, today) {
 
   const line = (t, tail) => {
     const no = t.stt ? `<b>${esc(t.stt)}.</b> ` : '';
-    const sec = t.sec ? esc(t.sec) + ' · ' : '';
-    return `• ${no}<b>${esc(t.name)}</b>\n   ${sec}${esc(t.person || 'chưa giao')} — ${tail}`;
+    return `• ${no}<b>${esc(t.name)}</b>\n   ${esc(t.person || 'chưa giao')} — ${tail}`;
   };
   const head = `<b>Cảnh báo công việc ${dd(today.getDate())}/${dd(today.getMonth() + 1)}/${today.getFullYear()}</b>`;
   const parts = [head, `Chậm: <b>${late.length}</b> · Sắp trễ: <b>${soon.length}</b>`];
