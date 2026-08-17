@@ -51,6 +51,9 @@ function parseTable(table) {
   for (let i = h + 1; i < grid.length; i++) {
     const r = grid[i], tt = g(r, C.tt), name = g(r, C.name);
     if (!name || isCode(tt)) continue;
+    // Chỉ lấy công việc cấp 1: cột TT là số nguyên (1, 2, 3…).
+    // Cấp 2 (3.1 / a / b) và cấp 3 (TT trống) bỏ qua cho tin nhắn gọn.
+    if (!/^\d+$/.test(tt)) continue;
     out.push({
       name, person: g(r, C.person), note: g(r, C.note),
       start: g(r, C.start), end: g(r, C.end),
@@ -83,7 +86,7 @@ function buildMessage(tasks, today) {
     + (late.length > 12 ? `\n… và ${late.length - 12} việc nữa` : ''));
   if (soon.length) parts.push('\n<b>SẮP ĐẾN HẠN</b>\n' + soon.slice(0, 12).map(t => line(t, t.d === 0 ? `hạn hôm nay` : `còn ${t.d} ngày (hạn ${t.end})`)).join('\n'));
   if (!late.length && !soon.length) parts.push('\nKhông có việc nào chậm hay sắp trễ hôm nay.');
-  if (WEB_URL) parts.push(`\n<a href="${WEB_URL}">Xem chi tiết trên web</a>`);
+  if (WEB_URL) parts.push(`\n<a href="${WEB_URL}">Xem chi tiết từng đầu mục con trên web</a>`);
   return parts.join('\n');
 }
 
