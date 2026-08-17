@@ -53,7 +53,9 @@ function parseTable(table) {
     if (!name || isCode(tt)) continue;
     // Chỉ lấy công việc cấp 1: cột TT là số nguyên (1, 2, 3…).
     // Cấp 2 (3.1 / a / b) và cấp 3 (TT trống) bỏ qua cho tin nhắn gọn.
-    if (!/^\d+$/.test(tt)) continue;
+    if (!/^\d+(\.0+)?$/.test(tt)) continue;
+    // Chặn thêm: trong Sheet việc con luôn viết mở đầu bằng dấu gạch ngang.
+    if (/^[-–•]/.test(name)) continue;
     out.push({
       name, person: g(r, C.person), note: g(r, C.note),
       start: g(r, C.start), end: g(r, C.end),
