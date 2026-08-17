@@ -48,16 +48,21 @@ function parseTable(table) {
   };
   const g = (r, i) => (i >= 0 && r[i] ? r[i] : '');
   const out = [];
+  let sec = '';
   for (let i = h + 1; i < grid.length; i++) {
     const r = grid[i], tt = g(r, C.tt), name = g(r, C.name);
-    if (!name || isCode(tt)) continue;
+    // Dòng tiêu đề nhóm: chỉ có tên nhóm ở cột TT, hoặc mã I/II/A đi kèm tên nhóm
+    if (!name && tt) { sec = tt; continue; }
+    if (!name) continue;
+    if (isCode(tt)) { sec = name; continue; }
     // Chỉ lấy công việc cấp 1: cột TT là số nguyên (1, 2, 3…).
     // Cấp 2 (3.1 / a / b) và cấp 3 (TT trống) bỏ qua cho tin nhắn gọn.
     if (!/^\d+(\.0+)?$/.test(tt)) continue;
     // Chặn thêm: trong Sheet việc con luôn viết mở đầu bằng dấu gạch ngang.
     if (/^[-–•]/.test(name)) continue;
     out.push({
-      name, person: g(r, C.person), note: g(r, C.note),
+      name, stt: tt.replace(/\.0+$/, ''), sec,
+      person: g(r, C.person), note: g(r, C.note),
       start: g(r, C.start), end: g(r, C.end),
       done: g(r, C.done) || (/hoàn thành/i.test(g(r, C.warn)) ? 'x' : '')
     });
@@ -80,7 +85,11 @@ function buildMessage(tasks, today) {
   late.sort((a, b) => b.d - a.d);
   soon.sort((a, b) => a.d - b.d);
 
-  const line = (t, tail) => `• <b>${esc(t.name)}</b>\n   ${esc(t.person || 'chưa giao')} — ${tail}`;
+  const line = (t, tail) => {
+    const no = t.stt ? `<b>${esc(t.stt)}.</b> ` : '';
+    const sec = t.sec ? esc(t.sec) + ' · ' : '';
+    return `• ${no}<b>${esc(t.name)}</b>\n   ${sec}${esc(t.person || 'chưa giao')} — ${tail}`;
+  };
   const head = `<b>Cảnh báo công việc ${dd(today.getDate())}/${dd(today.getMonth() + 1)}/${today.getFullYear()}</b>`;
   const parts = [head, `Chậm: <b>${late.length}</b> · Sắp trễ: <b>${soon.length}</b>`];
 
