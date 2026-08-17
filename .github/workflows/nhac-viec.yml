@@ -2,8 +2,8 @@ name: Nhắc việc hằng ngày
 
 on:
   schedule:
-    # 00:30 UTC = 09:00 giờ Việt Nam, chạy mỗi ngày
-    - cron: '30 0 * * *'
+    # 02:00 UTC = 09:00 giờ Việt Nam, chạy mỗi ngày
+    - cron: '0 2 * * *'
   workflow_dispatch:        # cho phép bấm chạy thử bằng tay
 
 jobs:
