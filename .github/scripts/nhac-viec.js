@@ -73,29 +73,34 @@ function parseTable(table) {
 function esc(s) { return String(s).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c])); }
 
 function buildMessage(tasks, today) {
-  const late = [], soon = [];
+  const late = [], soon = [], running = [];
   for (const t of tasks) {
     if (String(t.done || '').trim()) continue;
-    const end = parseD(t.end);
+    const end = parseD(t.end), start = parseD(t.start);
     if (!end) continue;
     const d = diff(end, today);
-    if (d > 0) late.push({ ...t, d });
-    else if (-d <= SOON_DAYS) soon.push({ ...t, d: -d });
+    if (d > 0) { late.push({ ...t, d }); continue; }
+    if (-d <= SOON_DAYS) { soon.push({ ...t, d: -d }); continue; }
+    // Đang triển khai: đã qua ngày bắt đầu, còn hạn xa hơn ngưỡng sắp trễ
+    if (start && diff(start, today) >= 0) running.push({ ...t, d: -d });
   }
   late.sort((a, b) => b.d - a.d);
   soon.sort((a, b) => a.d - b.d);
+  running.sort((a, b) => a.d - b.d);
 
   const line = (t, tail) => {
     const no = t.stt ? `<b>${esc(t.stt)}.</b> ` : '';
     return `• ${no}<b>${esc(t.name)}</b>\n   ${esc(t.person || 'chưa giao')} — ${tail}`;
   };
   const head = `<b>Cảnh báo công việc ${dd(today.getDate())}/${dd(today.getMonth() + 1)}/${today.getFullYear()}</b>`;
-  const parts = [head, `Chậm: <b>${late.length}</b> · Sắp trễ: <b>${soon.length}</b>`];
+  const parts = [head, `Chậm: <b>${late.length}</b> · Sắp trễ: <b>${soon.length}</b> · Đang triển khai: <b>${running.length}</b>`];
 
   if (late.length) parts.push('\n<b>CHẬM DEADLINE</b>\n' + late.slice(0, 12).map(t => line(t, `chậm ${t.d} ngày (hạn ${t.end})`)).join('\n')
     + (late.length > 12 ? `\n… và ${late.length - 12} việc nữa` : ''));
   if (soon.length) parts.push('\n<b>SẮP ĐẾN HẠN</b>\n' + soon.slice(0, 12).map(t => line(t, t.d === 0 ? `hạn hôm nay` : `còn ${t.d} ngày (hạn ${t.end})`)).join('\n'));
-  if (!late.length && !soon.length) parts.push('\nKhông có việc nào chậm hay sắp trễ hôm nay.');
+  if (running.length) parts.push('\n<b>ĐANG TRIỂN KHAI</b>\n' + running.slice(0, 12).map(t => line(t, `còn ${t.d} ngày (hạn ${t.end})`)).join('\n')
+    + (running.length > 12 ? `\n… và ${running.length - 12} việc nữa` : ''));
+  if (!late.length && !soon.length && !running.length) parts.push('\nKhông có việc nào đang chạy, chậm hay sắp trễ hôm nay.');
   if (WEB_URL) parts.push(`\n<a href="${WEB_URL}">Xem chi tiết từng đầu mục con trên web</a>`);
   return parts.join('\n');
 }
