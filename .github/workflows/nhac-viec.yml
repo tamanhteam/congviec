@@ -2,8 +2,10 @@ name: Nhắc việc hằng ngày
 
 on:
   schedule:
-    # 02:00 UTC = 09:00 giờ Việt Nam, chạy mỗi ngày
+    # 02:00 UTC = 09:00 giờ Việt Nam
     - cron: '0 2 * * *'
+    # 07:30 UTC = 14:30 giờ Việt Nam
+    - cron: '30 7 * * *'
   workflow_dispatch:        # cho phép bấm chạy thử bằng tay
 
 jobs:
@@ -13,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Gửi cảnh báo lên Telegram
         env:
           SHEET_ID: 15S-iIk5J0OafEAauoLV2oaaKwMc4xzPH_0m0kQAR1pM
