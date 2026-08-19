@@ -38,13 +38,21 @@ function parseTable(table) {
   }
   if (h < 0) return [];
   const col = (...keys) => { for (const k of keys) { const i = head.findIndex(c => c.includes(k)); if (i >= 0) return i; } return -1; };
+  // Tiêu đề các cột ngày để trống, nên neo theo cột mốc: Bắt đầu / Kết thúc là hai
+  // cột ngày cuối trước cột Chi phí; Hoàn thành là cột ngày đầu tiên sau cột Cảnh báo.
   const dateCols = (table.cols || []).map((c, i) => (c.type === 'date' || c.type === 'datetime' ? i : -1)).filter(i => i >= 0);
-  const pick = (labelled, nth) => (labelled >= 0 ? labelled : (dateCols[nth] != null ? dateCols[nth] : -1));
+  const warnCol = col('cảnh báo');
+  const costCol = col('chi phí', 'phân loại');
+  const before = dateCols.filter(i => (costCol < 0 || i < costCol) && (warnCol < 0 || i < warnCol));
+  const after = dateCols.filter(i => warnCol >= 0 && i > warnCol);
+  const pick = (labelled, fallback) => (labelled >= 0 ? labelled : (fallback != null ? fallback : -1));
   const C = {
     tt: col('tt'), name: col('công việc'), note: col('ghi chú/ tiến độ', 'ghi chú/tiến độ', 'tiến độ'),
-    person: col('phụ trách'), warn: col('cảnh báo'),
-    review: pick(col('thẩm định'), 0), start: pick(col('bắt đầu'), 1),
-    end: pick(col('kết thúc'), 2), done: pick(col('hoàn thành'), 3)
+    person: col('phụ trách'), warn: warnCol,
+    review: pick(col('thẩm định'), before[0]),
+    start: pick(col('bắt đầu'), before[before.length - 2]),
+    end: pick(col('kết thúc'), before[before.length - 1]),
+    done: pick(col('hoàn thành'), after[0])
   };
   const g = (r, i) => (i >= 0 && r[i] ? r[i] : '');
   const out = [];
