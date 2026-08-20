@@ -43,13 +43,19 @@ function parseTable(table) {
   const dateCols = (table.cols || []).map((c, i) => (c.type === 'date' || c.type === 'datetime' ? i : -1)).filter(i => i >= 0);
   const warnCol = col('cảnh báo');
   const costCol = col('chi phí', 'phân loại');
-  const before = dateCols.filter(i => (costCol < 0 || i < costCol) && (warnCol < 0 || i < warnCol));
+  // Ngay sau cột Kết thúc là cột SỐ NGÀY (number) — dùng nó làm mốc cắt, nhờ đó các cột
+  // ngày thêm về sau (Deadline cũ…) không bị nhầm thành Kết thúc.
+  const numCols = (table.cols || []).map((c, i) => (c.type === 'number' ? i : -1)).filter(i => i >= 0);
+  const d0 = dateCols.length ? dateCols[0] : 0;
+  const limit = [numCols.find(i => i > d0), costCol >= 0 ? costCol : undefined, warnCol >= 0 ? warnCol : undefined]
+    .filter(i => i != null).reduce((a, b) => Math.min(a, b), Infinity);
+  const before = dateCols.filter(i => i < limit);
   const after = dateCols.filter(i => warnCol >= 0 && i > warnCol);
   const pick = (labelled, fallback) => (labelled >= 0 ? labelled : (fallback != null ? fallback : -1));
   const C = {
     tt: col('tt'), name: col('công việc'), note: col('ghi chú/ tiến độ', 'ghi chú/tiến độ', 'tiến độ'),
     person: col('phụ trách'), warn: warnCol,
-    review: pick(col('thẩm định'), before[0]),
+    review: pick(col('thẩm định'), before.length > 2 ? before[0] : undefined),
     start: pick(col('bắt đầu'), before[before.length - 2]),
     end: pick(col('kết thúc'), before[before.length - 1]),
     done: pick(col('hoàn thành'), after[0])
